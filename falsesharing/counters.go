@@ -10,8 +10,8 @@ import (
 // Counters holds two independent counters. Each worker owns exactly one field;
 // neither ever reads or writes the other's.
 type Counters struct {
-	A atomic.Int64
-	B atomic.Int64
+	A atomic.Int64 // 8 bytes
+	B atomic.Int64 // 8 bytes
 }
 
 // oneWorker performs 2*n increments from a single goroutine.
