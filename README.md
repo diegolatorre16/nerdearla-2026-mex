@@ -52,13 +52,13 @@ cd nerdearla-2026-mex
 go test ./...
 
 # The hook: one goroutine vs two (the padded variant stays hidden)
-go test -bench 'OneWorker|TwoWorkers$' -benchtime 3x -count 5 ./falsesharing
+go test -bench 'OneWorker|TwoWorkers$' -count 5 ./falsesharing
 
 # No data race, no trick
 go test -race -bench . -benchtime 1x ./falsesharing
 
 # The reveal: all three variants
-go test -bench . -benchtime 3x -count 5 ./falsesharing
+go test -bench . -count 5 ./falsesharing
 ```
 
 Besides the standard `ns/op`, each benchmark reports `Madds/s` (millions of atomic
@@ -66,22 +66,20 @@ increments per second), so a slower run reads as a smaller number.
 
 ### Reference results
 
-Apple M4, 10 cores, 128-byte cache lines:
+Apple M4, 10 cores, 128-byte cache lines. Medians over `-count 10` as reported by benchstat:
 
 ```
-BenchmarkOneWorker-10            16.4 ms/op    604 Madds/s
-BenchmarkTwoWorkers-10           31.8 ms/op    314 Madds/s   <- two goroutines, half the speed
-BenchmarkTwoWorkersPadded-10     12.3 ms/op    813 Madds/s
+                       sec/op         Madds/s
+OneWorker-10          16.18m ± 2%    618 ± 2%
+TwoWorkers-10         31.85m ± 2%    314 ± 2%   <- two goroutines, half the speed
+TwoWorkersPadded-10   12.95m ± 2%    772 ± 2%
 ```
 
 The exact milliseconds depend on your CPU, but the ratios hold: `TwoWorkers` is around 2x
-slower than `OneWorker`, and `TwoWorkersPadded` is around 2.5x to 3x faster than
-`TwoWorkers`.
+slower than `OneWorker`, and `TwoWorkersPadded` is around 2.5x faster than `TwoWorkers`.
 
 ### Measuring tips
 
-- The first run of a session is always slow (CPU frequency scaling, cold caches). Use
-  `-count 3` or more and read the steady-state rows.
 - On laptops, run plugged in. On Apple Silicon, P-core/E-core scheduling shifts the numbers
   depending on the power state.
 - Close your browser and other heavy applications before measuring.
@@ -89,7 +87,7 @@ slower than `OneWorker`, and `TwoWorkersPadded` is around 2.5x to 3x faster than
   [benchstat](https://pkg.go.dev/golang.org/x/perf/cmd/benchstat):
 
   ```bash
-  go test -bench . -benchtime 3x -count 10 ./falsesharing | tee bench.txt
+  go test -bench . -count 10 ./falsesharing | tee bench.txt
   benchstat bench.txt
   ```
 
